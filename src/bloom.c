@@ -22,6 +22,7 @@
 
 #include "../include/bloom.h"
 #include "../include/murmurhash2.h"
+#include "../include/env.h"
 
 #define MAKESTRING(n) STRING(n)
 #define STRING(n) #n
@@ -150,7 +151,7 @@ struct bloom *bloom_init2(int entries, double error) {
   char *bloom_filter_buf = NULL;
   size_t bloom_size = bloom_calculate_filter_size(&tmp_bloom);
 
-  if (posix_memalign((void **)&bloom_filter_buf, BLOOM_ALIGNMENT, bloom_size)) {
+  if (mem_alloc_aligned((void **)&bloom_filter_buf, BLOOM_ALIGNMENT, bloom_size)) {
     printf("memalign of %lu bytes failed\n", bloom_size);
     return NULL;
   }
@@ -212,13 +213,13 @@ int bloom_persist(struct bloom *bloom, int file_desc) {
 struct bloom *bloom_recover(int file_desc) {
   off64_t bloom_size = lseek64(file_desc, 0, SEEK_END);
   char *bloom_filter_buf = NULL;
-  if (posix_memalign((void **)&bloom_filter_buf, BLOOM_ALIGNMENT, bloom_size)) {
+  if (mem_alloc_aligned((void **)&bloom_filter_buf, BLOOM_ALIGNMENT, bloom_size)) {
     printf("Failed to allocate buffer to recover bloom filter\n");
     return NULL;
   }
   if (bloom_read_from_file(file_desc, 0, bloom_filter_buf, bloom_size)) {
     printf("Failed to read bloom filter from file\n");
-    free(bloom_filter_buf);
+    mem_free(bloom_filter_buf);
     return NULL;
   }
   return (struct bloom *)bloom_filter_buf;

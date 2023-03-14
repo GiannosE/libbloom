@@ -29,6 +29,7 @@ set(
   SOURCE_FILES
   src/bloom.c
   src/MurmurHash2.c
+  src/env.c
 )
 
 include_directories(murmur2)
